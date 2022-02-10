@@ -1,0 +1,13 @@
+---
+
+test:
+  hosts:
+    demo-node03:
+      ansible_host: 10.44.243.179
+
+all:
+  vars:
+    pkgs:
+      - redweb
+      - greenweb
+    rtn: {}

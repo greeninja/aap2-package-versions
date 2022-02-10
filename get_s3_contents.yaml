@@ -1,0 +1,47 @@
+---
+
+- name: Get S3 Contents
+  hosts: test
+  gather_facts: false
+  vars_prompt:
+    - name: package_name
+      prompt: Which package do you want to see available versions?
+      private: no
+
+  tasks:
+    - debug:
+        msg: "Checking available rpms for {{ package_name }}"
+    - name: List keys simple
+      amazon.aws.aws_s3:
+        aws_access_key: "{{ s3_access_key }}"
+        aws_secret_key: "{{ s3_secret_key }}"
+        s3_url: "{{ s3url }}"
+        bucket: rpms
+        mode: list
+        prefix: "{{ package_name }}"
+      register: s3list
+      delegate_to: localhost
+    
+    - debug:
+        var: s3list.s3_keys
+
+- name: Install package
+  hosts: test
+  gather_facts: false
+  vars_prompt:
+    - name: pkg_version
+      prompt: Which version do you want to install?
+      private: no
+  tasks:
+    - debug:
+        msg: "Installing {{ pkg_version }}"
+    - name: Install package
+      dnf:
+        name: "{{s3url}}/rpms/{{ pkg_version }}"
+        state: installed
+        disable_gpg_check: true
+    - name: Restart service
+      service:
+        name: "{{ pkg_version.split('/')[0] }}"
+        state: restarted
+

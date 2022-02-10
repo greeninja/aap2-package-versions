@@ -1,0 +1,36 @@
+---
+
+- name: Get packages
+  hosts: test
+  gather_facts: false
+  tasks:
+    - name: Get packages
+      package_facts:
+
+    - name: Set fact - Version
+      set_fact:
+        rtn: "{{ rtn | combine( { item: ansible_facts.packages[item][0]['version'] } ) }}"
+      loop: "{{ pkgs }}"
+      loop_control:
+        label: "{{ item }}"
+      when: ansible_facts.packages[item] is defined and ansible_facts.packages[item] | length == 1
+
+    - name: Set fact - Not Installed
+      set_fact:
+        rtn: "{{ rtn | combine( { item: 'Not Installed' }) }}"
+      loop: "{{ pkgs }}"
+      loop_control:
+        label: "{{ item }}"
+      when: ansible_facts.packages[item] is not defined
+
+    - name: Set fact - Multiple Versions
+      set_fact:
+        rtn: "{{ rtnpkgs | combine( { item: 'Multiple Versions Installed' }) }}"
+      loop: "{{ pkgs }}"
+      loop_control:
+        label: "{{ item }}"
+      when: ansible_facts.packages[item] is defined and ansible_facts.packages[item] | length > 1
+
+    - name: Debug - dump rtn
+      debug:
+        msg: "{{ rtn }}"
